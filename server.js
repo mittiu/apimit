@@ -15,6 +15,11 @@ app.get("/streamers", async (req,res)=>{
  const [rows] = await db.query("SELECT * FROM streamers ORDER BY nome");
  res.json(rows);
 });
+
+app.get("/teste", (req, res) => {
+    console.log("TESTE CHAMADO");
+    res.json({ ok: true });
+});
 app.delete('/streamer/:id', async (req, res) => {
     try {
 
