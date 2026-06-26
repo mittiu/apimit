@@ -84,6 +84,7 @@ app.get('/test/addstreamer', async (req,res)=>{
     });
 
 });
+console.log(">>> Rota OPENLIVE carregada");
 app.post("/openlive", async (req, res) => {
  console.log(req.body);
     try {
