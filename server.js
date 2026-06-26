@@ -16,9 +16,10 @@ app.get("/streamers", async (req,res)=>{
  res.json(rows);
 });
 
-app.get("/teste", (req, res) => {
-    console.log("TESTE CHAMADO");
-    res.json({ ok: true });
+app.post("/abc123", (req, res) => {
+    res.json({
+        ok: true
+    });
 });
 app.delete('/streamer/:id', async (req, res) => {
     try {
