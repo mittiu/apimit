@@ -85,6 +85,7 @@ app.get('/test/addstreamer', async (req,res)=>{
 
 });
 app.post("/openlive", async (req, res) => {
+ console.log(req.body);
     try {
         const { id } = req.body;
 
