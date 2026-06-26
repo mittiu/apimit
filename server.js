@@ -90,33 +90,56 @@ app.get('/test/addstreamer', async (req,res)=>{
     });
 
 });
-console.log(">>> Rota OPENLIVE carregada");
 app.post("/openlive", async (req, res) => {
- console.log(req.body);
     try {
-        const { id } = req.body;
+        const { id, nome, twitch } = req.body;
 
         const [streamer] = await db.query(
             "SELECT * FROM streamers WHERE id = ?",
             [id]
         );
 
+        // Se não existir, cria o streamer
         if (streamer.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Streamer não encontrado."
-            });
+
+            await db.query(
+                `INSERT INTO streamers
+                (id, nome, twitch_id, status)
+                VALUES (?, ?, ?, 'online')`,
+                [id, nome, twitch]
+            );
+
+        } else {
+
+            // Se existir, apenas coloca online
+            await db.query(
+                "UPDATE streamers SET status = 'online' WHERE id = ?",
+                [id]
+            );
+
         }
 
-        await db.query(
-            "UPDATE streamers SET status = 'online' WHERE id = ?",
+        // Verifica se já existe uma sessão aberta
+        const [sessao] = await db.query(
+            `SELECT id
+             FROM streamer_sessions
+             WHERE streamer_id = ?
+             AND saida IS NULL
+             LIMIT 1`,
             [id]
         );
 
-        await db.query(
-            "INSERT INTO streamer_sessions (streamer_id, entrada) VALUES (?, NOW())",
-            [id]
-        );
+        // Só cria uma nova sessão se não existir uma aberta
+        if (sessao.length === 0) {
+
+            await db.query(
+                `INSERT INTO streamer_sessions
+                (streamer_id, entrada)
+                VALUES (?, NOW())`,
+                [id]
+            );
+
+        }
 
         res.json({
             success: true,
@@ -124,10 +147,12 @@ app.post("/openlive", async (req, res) => {
         });
 
     } catch (err) {
+
         res.status(500).json({
             success: false,
             error: err.message
         });
+
     }
 });
 app.post("/offlive", async (req, res) => {
