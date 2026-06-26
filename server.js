@@ -84,7 +84,87 @@ app.get('/test/addstreamer', async (req,res)=>{
     });
 
 });
+app.post("/openlive", async (req, res) => {
+    try {
+        const { id } = req.body;
 
+        const [streamer] = await db.query(
+            "SELECT * FROM streamers WHERE id = ?",
+            [id]
+        );
+
+        if (streamer.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Streamer não encontrado."
+            });
+        }
+
+        await db.query(
+            "UPDATE streamers SET status = 'online' WHERE id = ?",
+            [id]
+        );
+
+        await db.query(
+            "INSERT INTO streamer_sessions (streamer_id, entrada) VALUES (?, NOW())",
+            [id]
+        );
+
+        res.json({
+            success: true,
+            message: "Live iniciada."
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
+app.post("/offlive", async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        const [streamer] = await db.query(
+            "SELECT * FROM streamers WHERE id = ?",
+            [id]
+        );
+
+        if (streamer.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Streamer não encontrado."
+            });
+        }
+
+        await db.query(
+            "UPDATE streamers SET status = 'offline' WHERE id = ?",
+            [id]
+        );
+
+        await db.query(
+            `UPDATE streamer_sessions
+             SET saida = NOW()
+             WHERE streamer_id = ?
+             AND saida IS NULL
+             ORDER BY id DESC
+             LIMIT 1`,
+            [id]
+        );
+
+        res.json({
+            success: true,
+            message: "Live finalizada."
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
 app.get('/schema', async (req, res) => {
     try {
 
