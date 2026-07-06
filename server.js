@@ -73,6 +73,96 @@ app.get('/users', async (req, res) => {
 
     }
 });
+app.get("/test/populate", async (req, res) => {
+    try {
+
+        const streamers = [
+            { id: 101, nome: "Mittiu", twitch: "mittiu" },
+            { id: 102, nome: "Capitao", twitch: "capitao" },
+            { id: 103, nome: "Oudry", twitch: "oudry" },
+            { id: 104, nome: "Titia", twitch: "titia" },
+            { id: 105, nome: "Lopes", twitch: "lopes" },
+            { id: 106, nome: "Arthur", twitch: "arthur" },
+            { id: 107, nome: "Bruno", twitch: "bruno" },
+            { id: 108, nome: "Pedro", twitch: "pedro" },
+            { id: 109, nome: "Joao", twitch: "joao" },
+            { id: 110, nome: "Lucas", twitch: "lucas" }
+        ];
+
+        let totalSessions = 0;
+
+        for (const s of streamers) {
+
+            const [exists] = await db.query(
+                "SELECT id FROM streamers WHERE id = ?",
+                [s.id]
+            );
+
+            if (exists.length === 0) {
+                await db.query(`
+                    INSERT INTO streamers
+                    (id,nome,twitch_id,status)
+                    VALUES (?,?,?,'offline')
+                `, [s.id, s.nome, s.twitch]);
+            }
+
+            const [already] = await db.query(
+                "SELECT COUNT(*) total FROM sessions WHERE streamer_id = ?",
+                [s.id]
+            );
+
+            if (already[0].total > 0)
+                continue;
+
+            for (let i = 0; i < 40; i++) {
+
+                const daysAgo = Math.floor(Math.random() * 180);
+
+                const entrada = new Date();
+
+                entrada.setDate(entrada.getDate() - daysAgo);
+
+                entrada.setHours(
+                    17 + Math.floor(Math.random() * 6),
+                    Math.floor(Math.random() * 60),
+                    0,
+                    0
+                );
+
+                const horas = 4 + Math.floor(Math.random() * 5);
+
+                const saida = new Date(entrada);
+                saida.setHours(saida.getHours() + horas);
+                saida.setMinutes(saida.getMinutes() + Math.floor(Math.random() * 50));
+
+                await db.query(`
+                    INSERT INTO sessions
+                    (streamer_id,entrada,saida)
+                    VALUES (?,?,?)
+                `, [s.id, entrada, saida]);
+
+                totalSessions++;
+            }
+
+        }
+
+        res.json({
+            success: true,
+            streamers: streamers.length,
+            sessions: totalSessions
+        });
+
+    } catch (err) {
+
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+
+    }
+});
+
+
 app.get('/test/addstreamer', async (req,res)=>{
 
     const nome = "Teste_" + Date.now();
