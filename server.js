@@ -73,83 +73,74 @@ app.get('/users', async (req, res) => {
 
     }
 });
-app.get("/test/populate", async (req, res) => {
+app.get("/test/addstreamer", async (req, res) => {
     try {
 
-        const streamers = [
-            { id: 101, nome: "Mittiu", twitch: "mittiu" },
-            { id: 102, nome: "Capitao", twitch: "capitao" },
-            { id: 103, nome: "Oudry", twitch: "oudry" },
-            { id: 104, nome: "Titia", twitch: "titia" },
-            { id: 105, nome: "Lopes", twitch: "lopes" },
-            { id: 106, nome: "Arthur", twitch: "arthur" },
-            { id: 107, nome: "Bruno", twitch: "bruno" },
-            { id: 108, nome: "Pedro", twitch: "pedro" },
-            { id: 109, nome: "Joao", twitch: "joao" },
-            { id: 110, nome: "Lucas", twitch: "lucas" }
-        ];
+        const id = Number(req.query.id) || Math.floor(1000 + Math.random() * 9000);
+        const nome = req.query.nome || ("Streamer_" + id);
+        const twitch = req.query.twitch || nome.toLowerCase();
 
-        let totalSessions = 0;
+        const [exists] = await db.query(
+            "SELECT id FROM streamers WHERE id = ?",
+            [id]
+        );
 
-        for (const s of streamers) {
+        if (exists.length === 0) {
 
-            const [exists] = await db.query(
-                "SELECT id FROM streamers WHERE id = ?",
-                [s.id]
+            await db.query(
+                `INSERT INTO streamers
+                (id, nome, twitch_id, status)
+                VALUES (?, ?, ?, 'offline')`,
+                [id, nome, twitch]
             );
 
-            if (exists.length === 0) {
-                await db.query(`
-                    INSERT INTO streamers
-                    (id,nome,twitch_id,status)
-                    VALUES (?,?,?,'offline')
-                `, [s.id, s.nome, s.twitch]);
-            }
+        }
 
-            const [already] = await db.query(
-                "SELECT COUNT(*) total FROM sessions WHERE streamer_id = ?",
-                [s.id]
+        let total = 0;
+
+        for (let i = 0; i < 18; i++) {
+
+            const entrada = new Date();
+
+            // Últimos 30 dias
+            entrada.setDate(entrada.getDate() - Math.floor(Math.random() * 30));
+
+            // Começa entre 17h e 22h
+            entrada.setHours(
+                17 + Math.floor(Math.random() * 6),
+                Math.floor(Math.random() * 60),
+                0,
+                0
             );
 
-            if (already[0].total > 0)
-                continue;
+            // Live entre 4 e 8 horas
+            const saida = new Date(entrada);
+            saida.setHours(
+                saida.getHours() + (4 + Math.floor(Math.random() * 5))
+            );
 
-            for (let i = 0; i < 40; i++) {
+            saida.setMinutes(
+                saida.getMinutes() + Math.floor(Math.random() * 60)
+            );
 
-                const daysAgo = Math.floor(Math.random() * 180);
+            await db.query(
+                `INSERT INTO streamer_sessions
+                (streamer_id, entrada, saida)
+                VALUES (?, ?, ?)`,
+                [id, entrada, saida]
+            );
 
-                const entrada = new Date();
-
-                entrada.setDate(entrada.getDate() - daysAgo);
-
-                entrada.setHours(
-                    17 + Math.floor(Math.random() * 6),
-                    Math.floor(Math.random() * 60),
-                    0,
-                    0
-                );
-
-                const horas = 4 + Math.floor(Math.random() * 5);
-
-                const saida = new Date(entrada);
-                saida.setHours(saida.getHours() + horas);
-                saida.setMinutes(saida.getMinutes() + Math.floor(Math.random() * 50));
-
-                await db.query(`
-                    INSERT INTO sessions
-                    (streamer_id,entrada,saida)
-                    VALUES (?,?,?)
-                `, [s.id, entrada, saida]);
-
-                totalSessions++;
-            }
-
+            total++;
         }
 
         res.json({
             success: true,
-            streamers: streamers.length,
-            sessions: totalSessions
+            streamer: {
+                id,
+                nome,
+                twitch
+            },
+            sessions: total
         });
 
     } catch (err) {
