@@ -288,33 +288,23 @@ app.post("/offlive", async (req, res) => {
         });
     }
 });
-app.get('/schema', async (req, res) => {
-    try {
+app.get("/schema", async (req, res) => {
 
-        const [tables] = await db.query(`
-            SELECT TABLE_NAME
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_SCHEMA = ?
-        `, [process.env.DB_NAME]);
+    const [tables] = await db.query("SHOW TABLES");
 
-        const schema = {};
+    const resultado = {};
 
-        for (const table of tables) {
+    for (const table of tables) {
 
-            const [columns] = await db.query(`
-                SHOW COLUMNS FROM \`${table.TABLE_NAME}\`
-            `);
+        const nome = Object.values(table)[0];
 
-            schema[table.TABLE_NAME] = columns;
-        }
+        const [cols] = await db.query(`SHOW COLUMNS FROM \`${nome}\``);
 
-        res.json(schema);
-
-    } catch (err) {
-        res.status(500).json({
-            error: err.message
-        });
+        resultado[nome] = cols;
     }
+
+    res.json(resultado);
+
 });
 
 app.listen(process.env.PORT || 3000, ()=>{
