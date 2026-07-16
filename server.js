@@ -190,7 +190,7 @@ app.get('/test/addstreamer', async (req,res)=>{
 });
 app.post("/openlive", async (req, res) => {
     try {
-        const { id, nome, twitch } = req.body;
+        const { id, nome, twitch, kick } = req.body;  // ← Adicionar kick
 
         const [streamer] = await db.query(
             "SELECT * FROM streamers WHERE id = ?",
@@ -202,9 +202,9 @@ app.post("/openlive", async (req, res) => {
 
             await db.query(
                 `INSERT INTO streamers
-                (id, nome, twitch_id, status)
-                VALUES (?, ?, ?, 'online')`,
-                [id, nome, twitch]
+                (id, nome, twitch_id, kick_id, status)
+                VALUES (?, ?, ?, ?, 'online')`,  // ← Adicionar kick_id
+                [id, nome, twitch, kick]  // ← Adicionar kick
             );
 
         } else {
@@ -253,6 +253,7 @@ app.post("/openlive", async (req, res) => {
 
     }
 });
+
 app.post("/offlive", async (req, res) => {
     try {
         const { id } = req.body;
@@ -296,6 +297,7 @@ app.post("/offlive", async (req, res) => {
         });
     }
 });
+
 app.get("/schema", async (req, res) => {
 
     const [tables] = await db.query("SHOW TABLES");
