@@ -190,52 +190,76 @@ app.get('/test/addstreamer', async (req,res)=>{
 });
 app.post("/openlive", async (req, res) => {
     try {
-        const { id, nome, twitch, kick } = req.body;  // ← Adicionar kick
+
+        console.log("Body recebido:", req.body);
+
+        const { id, nome, twitch, kick } = req.body;
+
+        console.log({
+            id,
+            nome,
+            twitch,
+            kick
+        });
 
         const [streamer] = await db.query(
             "SELECT * FROM streamers WHERE id = ?",
             [id]
         );
 
-        // Se não existir, cria o streamer
         if (streamer.length === 0) {
 
-            await db.query(
-                `INSERT INTO streamers
+            await db.query(`
+                INSERT INTO streamers
                 (id, nome, twitch_id, kick_id, status)
-                VALUES (?, ?, ?, ?, 'online')`,  // ← Adicionar kick_id
-                [id, nome, twitch, kick]  // ← Adicionar kick
-            );
+                VALUES (?, ?, ?, ?, 'online')
+            `, [
+                id,
+                nome,
+                twitch,
+                kick
+            ]);
+
+            console.log("Streamer criado.");
 
         } else {
 
-            // Se existir, apenas coloca online
-            await db.query(
-                "UPDATE streamers SET status = 'online' WHERE id = ?",
-                [id]
-            );
+            await db.query(`
+                UPDATE streamers
+                SET
+                    nome = ?,
+                    twitch_id = ?,
+                    kick_id = ?,
+                    status = 'online'
+                WHERE id = ?
+            `, [
+                nome,
+                twitch,
+                kick,
+                id
+            ]);
+
+            console.log("Streamer atualizado.");
 
         }
 
-        // Verifica se já existe uma sessão aberta
-        const [sessao] = await db.query(
-            `SELECT id
-             FROM streamer_sessions
-             WHERE streamer_id = ?
-             AND saida IS NULL
-             LIMIT 1`,
-            [id]
-        );
+        const [sessao] = await db.query(`
+            SELECT id
+            FROM streamer_sessions
+            WHERE streamer_id = ?
+            AND saida IS NULL
+            LIMIT 1
+        `, [id]);
 
-        // Só cria uma nova sessão se não existir uma aberta
         if (sessao.length === 0) {
 
-            await db.query(
-                `INSERT INTO streamer_sessions
+            await db.query(`
+                INSERT INTO streamer_sessions
                 (streamer_id, entrada)
-                VALUES (?, NOW())`,
-                [id]
-            );
+                VALUES (?, NOW())
+            `, [id]);
+
+            console.log("Sessão criada.");
 
         }
 
@@ -245,6 +269,8 @@ app.post("/openlive", async (req, res) => {
         });
 
     } catch (err) {
+
+        console.error(err);
 
         res.status(500).json({
             success: false,
