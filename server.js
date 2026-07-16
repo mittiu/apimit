@@ -54,7 +54,24 @@ app.get('/delete/:id', async (req, res) => {
     });
 
 });
+app.get("/rename-kick-column", async (req, res) => {
+    try {
+        await db.query(`
+            ALTER TABLE streamers
+            RENAME COLUMN kickId TO kick_id
+        `);
 
+        res.json({
+            success: true,
+            message: "Coluna renomeada para kick_id!"
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
 app.get('/users', async (req, res) => {
     try {
 
@@ -153,28 +170,6 @@ app.get("/test/addstreamer", async (req, res) => {
     }
 });
 
-app.get("/create-kick-column", async (req, res) => {
-    try {
-
-        await db.query(`
-            ALTER TABLE streamers
-            ADD COLUMN kickId VARCHAR(255) NULL AFTER twitch_id
-        `);
-
-        res.json({
-            success: true,
-            message: "Coluna kickId criada com sucesso!"
-        });
-
-    } catch (err) {
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
-
-    }
-});
 
 app.get('/test/addstreamer', async (req,res)=>{
 
