@@ -153,6 +153,28 @@ app.get("/test/addstreamer", async (req, res) => {
     }
 });
 
+app.get("/create-kick-column", async (req, res) => {
+    try {
+
+        await db.query(`
+            ALTER TABLE streamers
+            ADD COLUMN kickId VARCHAR(255) NULL AFTER twitch_id
+        `);
+
+        res.json({
+            success: true,
+            message: "Coluna kickId criada com sucesso!"
+        });
+
+    } catch (err) {
+
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+
+    }
+});
 
 app.get('/test/addstreamer', async (req,res)=>{
 
