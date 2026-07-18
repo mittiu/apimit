@@ -21,7 +21,7 @@ app.post("/abc123", (req, res) => {
         ok: true
     });
 });
-app.post("/add-is-partner", async (req, res) => {
+app.get("/add-is-partner", async (req, res) => {
     try {
         await db.query(`
             ALTER TABLE streamers
@@ -30,11 +30,10 @@ app.post("/add-is-partner", async (req, res) => {
 
         res.json({
             success: true,
-            message: "Coluna is_partner adicionada!"
+            message: "Coluna criada com sucesso!"
         });
 
     } catch (err) {
-
         if (err.code === "ER_DUP_FIELDNAME") {
             return res.json({
                 success: false,
