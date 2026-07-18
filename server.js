@@ -21,26 +21,35 @@ app.post("/abc123", (req, res) => {
         ok: true
     });
 });
-app.get("/add-is-partner", async (req, res) => {
+app.post("/streamer/partner", async (req, res) => {
     try {
-        await db.query(`
-            ALTER TABLE streamers
-            ADD COLUMN is_partner BOOLEAN NOT NULL DEFAULT FALSE
-        `);
+        const { id, is_partner } = req.body;
 
-        res.json({
-            success: true,
-            message: "Coluna criada com sucesso!"
-        });
-
-    } catch (err) {
-        if (err.code === "ER_DUP_FIELDNAME") {
-            return res.json({
+        if (typeof id === "undefined" || typeof is_partner !== "boolean") {
+            return res.status(400).json({
                 success: false,
-                message: "A coluna já existe."
+                message: "Envie id e is_partner (true ou false)."
             });
         }
 
+        const [result] = await db.query(
+            "UPDATE streamers SET is_partner = ? WHERE id = ?",
+            [is_partner, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Streamer não encontrado."
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `is_partner atualizado para ${is_partner}.`
+        });
+
+    } catch (err) {
         res.status(500).json({
             success: false,
             error: err.message
