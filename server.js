@@ -21,6 +21,33 @@ app.post("/abc123", (req, res) => {
         ok: true
     });
 });
+app.post("/add-is-partner", async (req, res) => {
+    try {
+        await db.query(`
+            ALTER TABLE streamers
+            ADD COLUMN is_partner BOOLEAN NOT NULL DEFAULT FALSE
+        `);
+
+        res.json({
+            success: true,
+            message: "Coluna is_partner adicionada!"
+        });
+
+    } catch (err) {
+
+        if (err.code === "ER_DUP_FIELDNAME") {
+            return res.json({
+                success: false,
+                message: "A coluna já existe."
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
 app.delete('/streamer/:id', async (req, res) => {
     try {
 
