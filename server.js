@@ -21,6 +21,25 @@ app.post("/abc123", (req, res) => {
         ok: true
     });
 });
+
+app.get("/backup", async (req, res) => {
+    try {
+        const [streamers] = await db.query("SELECT * FROM streamers");
+        const [streamer_sessions] = await db.query("SELECT * FROM streamer_sessions");
+
+        res.json({
+            created_at: new Date(),
+            streamers,
+            streamer_sessions
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
 app.post("/streamer/partner", async (req, res) => {
     try {
         const { id, is_partner } = req.body;
